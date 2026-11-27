@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Info Visuels — Créateur de publications</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,700;0,800;1,300;1,400;1,600&family=Poppins:ital,wght@0,400;0,600;0,800;1,300;1,400&family=Oswald:wght@500;700&family=Space+Grotesk:wght@400;600;700&family=Roboto+Condensed:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0e10;--panel:#17171a;--line:#2a2a2f;--txt:#f0ede8;--mute:#93908a;--acc:#d41e2a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{display:grid;grid-template-columns:370px 1fr;background:var(--bg);color:var(--txt);font:14px/1.4 "Space Grotesk",system-ui,sans-serif}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow:auto;height:100vh}
+h1{font-size:16px;margin:0;padding:18px 18px 12px}
+details{border-top:1px solid var(--line);padding:12px 18px 14px}
+summary{cursor:pointer;font-weight:700;margin-bottom:8px;user-select:none}
+.f{display:block;margin:10px 0}
+.f span{display:flex;justify-content:space-between;color:var(--mute);font-size:12.5px;margin-bottom:4px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.row span{display:block;margin:0}
+.hide{display:none}
+output{color:var(--txt)}
+input[type=range]{width:100%;accent-color:var(--acc);height:26px}
+input[type=text],textarea,select{width:100%;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:9px;font:inherit}
+textarea{resize:vertical}
+input[type=color]{width:44px;height:30px;padding:0;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer}
+.drop{display:block;border:1px dashed #55524b;border-radius:8px;padding:14px;text-align:center;cursor:pointer;color:var(--mute);margin-bottom:8px}
+.drop:hover,.drop.over{border-color:var(--acc);color:var(--txt)}
+.ghost,.seg button,.preset{background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:9px 8px;font:inherit;cursor:pointer}
+.ghost:hover,.seg button:hover,.preset:hover{border-color:#55524b}
+.ghost{margin-top:6px;width:100%}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.btns .ghost{margin-top:0;font-size:12.5px;padding:8px 6px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg button{display:flex;flex-direction:column;align-items:center;font-size:13px}
+.seg small{color:var(--mute);font-size:11px}
+.seg .on{border-color:var(--acc);background:#2e1416}
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 10px}
+.preset{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:7px 6px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #fff4;flex:none}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:8px 0}
+.cgrid .f{margin:0}
+.tip{font-size:12px;color:var(--mute);margin:8px 0 2px}
+main{display:flex;flex-direction:column;min-width:0;height:100vh}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line);color:var(--mute)}
+.bar small{font-size:12px}
+.bar-acts{display:flex;gap:8px;align-items:center}
+.btn-sec{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font:700 13.5px "Space Grotesk",sans-serif;cursor:pointer;white-space:nowrap}
+#dl{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 13.5px "Space Grotesk",sans-serif;cursor:pointer;white-space:nowrap}
+.stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;user-select:none;overflow:hidden}
+.stage.over{outline:2px dashed var(--acc);outline-offset:-12px}
+#cv{box-shadow:0 20px 60px #000a;background:#000}
+#cv.has-photo{cursor:grab;touch-action:none}
+#cv.dragging{cursor:grabbing}
+#hint{position:absolute;pointer-events:none;color:#fff;background:#000b;padding:8px 14px;border-radius:8px;font-size:13px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);background:#222227;color:var(--txt);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:20;box-shadow:0 10px 30px #0009}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(max-width:860px){
+  html,body{height:100dvh;overflow:hidden}
+  body{display:flex;flex-direction:column}
+  main{order:1;height:46dvh;flex:none;border-bottom:1px solid var(--line)}
+  aside{order:2;flex:1;height:auto;border-right:0;overflow-y:auto;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+  h1{display:none}
+  .bar{padding:max(10px,env(safe-area-inset-top)) 12px 10px}
+  .bar small{display:none}
+  .btn-sec,#dl{padding:8px 12px;font-size:13px}
+}
+</style>
+</head>
+<body>
+<aside id="panel"></aside>
+<main>
+  <div class="bar">
+    <div><span id="info"></span><small> · Glissez la photo (2 doigts ou molette pour zoomer)</small></div>
+    <div class="bar-acts">
+      <button id="share" class="btn-sec" type="button">Partager</button>
+      <button id="dl" type="button">Enregistrer PNG</button>
+    </div>
+  </div>
+  <div class="stage" id="stage"><canvas id="cv"></canvas><div id="hint">Importez une photo ci-dessous</div></div>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ================= CONFIGURATION & VALEURS PAR DÉFAUT ================= */
+const CLE_CFG = "info-visuels-cfg-v1";
+const POLICES = ["Montserrat","Poppins","Space Grotesk","Oswald","Roboto Condensed","Playfair Display"];
+const FORMATS = { portrait:[1080,1350,"Portrait"], carre:[1080,1080,"Carré"], story:[1080,1920,"Story"] };
+const FIT_MODES = { blur:["Entière","Fond flou"], solid:["Entière","Fond uni"], cover:["Remplir","Plein cadre"] };
+
+const PRESETS = [
+  { id:"rouge",  nom:"Rouge Info",   dot:"#d41e2a", c:{ hdrBg:"#d41e2a", hdrColL:"#ffffff", hdrColR:"#ffffff", badgeBg:"#ffffff", badgeCol:"#d41e2a", gradCol:"#000000", titleCol:"#ffffff", subCol:"#d8d8d8", lineCol:"#262626", srcCol:"#b5b5b5", tagCol:"#ffffff" } },
+  { id:"bleu",   nom:"Bleu Média",   dot:"#1658b5", c:{ hdrBg:"#1658b5", hdrColL:"#ffffff", hdrColR:"#dce9ff", badgeBg:"#ffffff", badgeCol:"#1658b5", gradCol:"#060b16", titleCol:"#ffffff", subCol:"#d2dcf0", lineCol:"#22314d", srcCol:"#9fb4d6", tagCol:"#6cb2ff" } },
+  { id:"or",     nom:"Or & Noir",    dot:"#e5a91a", c:{ hdrBg:"#e5a91a", hdrColL:"#111111", hdrColR:"#111111", badgeBg:"#111111", badgeCol:"#e5a91a", gradCol:"#080808", titleCol:"#ffffff", subCol:"#dedad0", lineCol:"#332b16", srcCol:"#bfb8a8", tagCol:"#e5a91a" } },
+  { id:"vert",   nom:"Vert Éco",     dot:"#15803d", c:{ hdrBg:"#15803d", hdrColL:"#ffffff", hdrColR:"#dcfce7", badgeBg:"#ffffff", badgeCol:"#15803d", gradCol:"#051008", titleCol:"#ffffff", subCol:"#d5e8da", lineCol:"#1f3b28", srcCol:"#9fc2aa", tagCol:"#4ade80" } },
+  { id:"violet", nom:"Culture",      dot:"#7c3aed", c:{ hdrBg:"#7c3aed", hdrColL:"#ffffff", hdrColR:"#ede9fe", badgeBg:"#ffffff", badgeCol:"#7c3aed", gradCol:"#0b0614", titleCol:"#ffffff", subCol:"#ddd6fe", lineCol:"#2e1f4d", srcCol:"#b7a8d9", tagCol:"#c4b5fd" } },
+  { id:"clair",  nom:"Édition Claire",dot:"#f5f5f5",c:{ hdrBg:"#111111", hdrColL:"#ffffff", hdrColR:"#d4d4d4", badgeBg:"#d41e2a", badgeCol:"#ffffff", gradCol:"#f4f2ee", titleCol:"#111111", subCol:"#333333", lineCol:"#d0ccc4", srcCol:"#555555", tagCol:"#d41e2a" } }
+];
+
+const DEFAULTS = {
+  format:"portrait",
+  fitMode:"blur", blur:26, bgCol:"#0e0e10",
+  zoom:1, px:0, py:0, rot:0,
+
+  // Bandeau haut
+  showHdr:true, hdrH:94, hdrLeft:"ÉDUCATION À MADAGASCAR", hdrRight:"COMPARAISON",
+  hdrSizeL:33, hdrSizeR:27, hdrUpper:true,
+  hdrBg:"#d41e2a", hdrColL:"#ffffff", hdrColR:"#ffffff",
+
+  // Étiquette centrale (badge)
+  showBadge:true, badgeTxt:"TENY VOARARA", badgeSize:33, badgeY:26, badgeRadius:0, badgeUpper:true,
+  badgeBg:"#ffffff", badgeCol:"#d41e2a",
+
+  // Dégradé du bas
+  gradCol:"#000000", gradH:58, gradOp:100,
+
+  // Titre principal
+  title:"« \"Firenena mahantra\", \"firenena kely\" : voarara tsy azo ampiasaina any an-tsekoly intsony. »",
+  fontMain:"Montserrat", titleSize:56, titleCol:"#ffffff", titleAlign:"left",
+
+  // Paragraphe explicatif
+  sub:"Depuis le 1er octobre 2026, ces expressions sont bannies des manuels scolaires. L'objectif : empêcher que des mots répétés ne brisent la confiance des élèves.",
+  subSize:29, subCol:"#d8d8d8", subItalic:true,
+
+  // Pied de page
+  showFooter:true, showLine:true, lineCol:"#262626",
+  srcTxt:"Source : Analyse / Comparaison", srcCol:"#b5b5b5",
+  tagTxt:"#TanoraGasy", tagCol:"#ffffff", footSize:25,
+  savePrefs:true
+};
+
+// Charge les réglages mémorisés (couleurs, polices, signature)
+let S = { ...DEFAULTS };
+try {
+  const saved = JSON.parse(localStorage.getItem(CLE_CFG) || "null");
+  if (saved && typeof saved === "object") S = { ...S, ...saved };
+} catch(e){}
+
+/* ================= PANNEAU DE CONTRÔLE ================= */
+const UI = [
+ ["Format & Thèmes couleurs", [
+   ["fmt"],
+   ["presets"],
+   ["check","savePrefs","Mémoriser mes couleurs et ma signature"],
+   ["btn","resetStyle","Réinitialiser les couleurs par défaut"]
+ ]],
+ ["Photo de fond", [
+   ["file","photo","Choisir une photo dans la galerie","image/*"],
+   ["fit"],
+   ["range","blur","Intensité du flou",4,80,1," px","opt-blur"],
+   ["color","bgCol","Couleur du fond","","","","","opt-solid"],
+   ["range","zoom","Zoom",0.2,4,0.01,"×"],
+   ["range","px","Position horizontale",-100,100,0.5,"%"],
+   ["range","py","Position verticale",-100,100,0.5,"%"],
+   ["btns",[["fitPhotoZone","Centrer en haut"],["resetPhoto","Recentrer"],["rotPhoto","Pivoter 90°"],["delPhoto","Retirer la photo"]]],
+   ["tip","Glissez à 1 doigt pour déplacer la photo, pincez à 2 doigts pour zoomer."]
+ ]],
+ ["Bandeau du haut", [
+   ["check","showHdr","Afficher le bandeau"],
+   ["text","hdrLeft","Texte gauche (gras)"],
+   ["text","hdrRight","Texte droite"],
+   ["colors",[["hdrBg","Fond"],["hdrColL","Texte gauche"],["hdrColR","Texte droite"]]],
+   ["range","hdrH","Hauteur du bandeau",56,160,1," px"],
+   ["range","hdrSizeL","Taille texte gauche",18,56,1," px"],
+   ["range","hdrSizeR","Taille texte droite",16,48,1," px"],
+   ["check","hdrUpper","Tout en MAJUSCULES"]
+ ]],
+ ["Étiquette (Badge central)", [
+   ["check","showBadge","Afficher l’étiquette"],
+   ["text","badgeTxt","Texte du badge"],
+   ["colors",[["badgeBg","Fond badge"],["badgeCol","Texte badge"]]],
+   ["range","badgeSize","Taille du texte",18,56,1," px"],
+   ["range","badgeY","Distance sous le bandeau",0,220,2," px"],
+   ["range","badgeRadius","Arrondi des coins",0,36,1," px"],
+   ["check","badgeUpper","Tout en MAJUSCULES"]
+ ]],
+ ["Titre & Texte explicatif", [
+   ["area","title","Titre principal (gras)",3],
+   ["area","sub","Texte explicatif (sous le titre)",3],
+   ["select","fontMain","Police des textes",POLICES],
+   ["select","titleAlign","Alignement",[["left","Gauche"],["center","Centre"],["right","Droite"]]],
+   ["colors",[["titleCol","Couleur titre"],["subCol","Couleur texte"]]],
+   ["range","titleSize","Taille du titre",28,92,1," px"],
+   ["range","subSize","Taille texte explicatif",18,50,1," px"],
+   ["check","subItalic","Texte explicatif en italique"]
+ ]],
+ ["Dégradé du bas", [
+   ["color","gradCol","Couleur du dégradé / fond bas"],
+   ["range","gradH","Hauteur du dégradé",25,95,1," %"],
+   ["range","gradOp","Intensité / opacité",0,100,1," %"]
+ ]],
+ ["Pied de page (Source & Hashtag)", [
+   ["check","showFooter","Afficher le pied de page"],
+   ["text","srcTxt","Source (à gauche)"],
+   ["text","tagTxt","Hashtag / Signature (à droite)"],
+   ["colors",[["srcCol","Couleur source"],["tagCol","Couleur hashtag"],["lineCol","Couleur ligne"]]],
+   ["range","footSize","Taille du texte",16,42,1," px"],
+   ["check","showLine","Ligne de séparation"]
+ ]]
+];
+
+const $ = s => document.querySelector(s);
+const E = s => String(s).replace(/"/g,"&quot;").replace(/</g,"&lt;");
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const isMobile = matchMedia("(max-width:860px)").matches;
+
+function ctl([t,k,l,a,b,c,u,cls]){
+  const v = E(S[k] ?? ""), x = cls ? ` ${cls}` : "";
+  switch(t){
+    case "fmt": return `<div class="seg">${Object.entries(FORMATS).map(([id,f])=>`<button type="button" data-fmt="${id}">${f[2]}<small>${f[0]}×${f[1]}</small></button>`).join("")}</div>`;
+    case "fit": return `<div class="f"><span>Adaptation au format</span><div class="seg">${Object.entries(FIT_MODES).map(([id,f])=>`<button type="button" data-fit="${id}">${f[0]}<small>${f[1]}</small></button>`).join("")}</div></div>`;
+    case "presets": return `<div class="f"><span>Palettes rapides</span><div class="presets">${PRESETS.map(p=>`<button type="button" class="preset" data-preset="${p.id}"><span class="dot" style="background:${p.dot}"></span>${p.nom}</button>`).join("")}</div></div>`;
+    case "file": return `<label class="drop" data-drop="${k}"><input type="file" hidden accept="${a}" data-file="${k}">${l}</label>`;
+    case "btn": return `<button type="button" class="ghost" data-act="${k}">${l}</button>`;
+    case "btns": return `<div class="btns">${k.map(([id,lab])=>`<button type="button" class="ghost" data-act="${id}">${lab}</button>`).join("")}</div>`;
+    case "tip": return `<p class="tip">${k}</p>`;
+    case "range": return `<label class="f${x}"><span>${l}<output data-o="${k}" data-u="${u}"></output></span><input type="range" data-k="${k}" min="${a}" max="${b}" step="${c}" value="${v}"></label>`;
+    case "text": return `<label class="f${x}"><span>${l}</span><input type="text" data-k="${k}" value="${v}"></label>`;
+    case "area": return `<label class="f${x}"><span>${l}</span><textarea rows="${a||2}" data-k="${k}">${v}</textarea></label>`;
+    case "color": return `<label class="f row${x}"><span>${l}</span><input type="color" data-k="${k}" value="${v}"></label>`;
+    case "colors": return `<div class="cgrid">${k.map(([ck,cl])=>`<label class="f row"><span>${cl}</span><input type="color" data-k="${ck}" value="${E(S[ck])}"></label>`).join("")}</div>`;
+    case "check": return `<label class="f row${x}"><span>${l}</span><input type="checkbox" data-k="${k}" ${S[k]?"checked":""}></label>`;
+    case "select": return `<label class="f${x}"><span>${l}</span><select data-k="${k}">${a.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return `<option value="${val}" style="font-family:'${val}'"${val===S[k]?" selected":""}>${lab}</option>`}).join("")}</select></label>`;
+  }
+}
+
+$("#panel").innerHTML = "<h1>Info Visuels</h1>" + UI.map(([t,c],i)=>{
+  const open = !isMobile || i === 1 ? " open" : "";
+  return `<details${open}><summary>${t}</summary>${c.map(ctl).join("")}</details>`;
+}).join("");
+
+function toast(msg){
+  const el = $("#toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(()=>el.classList.remove("show"), 3200);
+}
+
+function saveConfig(){
+  if(!S.savePrefs) return;
+  const keep = ["format","fitMode","blur","bgCol","showHdr","hdrH","hdrSizeL","hdrSizeR","hdrUpper","hdrBg","hdrColL","hdrColR","showBadge","badgeSize","badgeY","badgeRadius","badgeUpper","badgeBg","badgeCol","gradCol","gradH","gradOp","fontMain","titleSize","titleCol","titleAlign","subSize","subCol","subItalic","showFooter","showLine","lineCol","srcCol","tagTxt","tagCol","footSize","savePrefs"];
+  const obj = {};
+  keep.forEach(k => obj[k] = S[k]);
+  try { localStorage.setItem(CLE_CFG, JSON.stringify(obj)); } catch(e){}
+}
+
+/* ================= MÉDIAS ================= */
+const cv = $("#cv"), ctx = cv.getContext("2d");
+let photo = null, photoId = 0, lastTextTopY = 750;
+const readFile = f => new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)});
+const loadImg = src => new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});
+const photoDims = () => !photo ? [1,1] : (S.rot % 180 ? [photo.height, photo.width] : [photo.width, photo.height]);
+
+async function loadPhoto(f){
+  photo = await loadImg(await readFile(f)); photoId++;
+  S.zoom = 1; S.px = 0; S.py = 0; S.rot = 0;
+  syncAllInputs(); render();
+}
+
+const actions = {
+  delPhoto(){ photo = null; render(); },
+  resetPhoto(){ S.zoom = 1; S.px = 0; S.py = 0; syncAllInputs(); render(); },
+  rotPhoto(){ if(photo){ S.rot = (S.rot + 90) % 360; render(); } },
+  fitPhotoZone(){
+    if(!photo) return;
+    const [W,H] = FORMATS[S.format], [pw,ph] = photoDims();
+    const topY = S.showHdr ? S.hdrH : 0;
+    const botY = Math.max(topY + 200, lastTextTopY + 40);
+    const availH = botY - topY;
+    const f = S.fitMode === "cover" ? Math.max : Math.min;
+    S.zoom = clamp(Math.round(f(W/pw, availH/ph) / f(W/pw, H/ph) * 100) / 100, 0.2, 4);
+    S.px = 0;
+    const targetCy = topY + availH / 2;
+    S.py = clamp(Math.round(((targetCy - H/2) / H) * 200) / 2, -100, 100);
+    syncAllInputs(); render();
+  },
+  resetStyle(){
+    const textKeys = ["hdrLeft","hdrRight","badgeTxt","title","sub","srcTxt","tagTxt","zoom","px","py","rot"];
+    const preserved = {};
+    textKeys.forEach(k => preserved[k] = S[k]);
+    S = { ...DEFAULTS, ...preserved };
+    try { localStorage.removeItem(CLE_CFG); } catch(e){}
+    syncAllInputs(); render();
+    toast("Couleurs réinitialisées");
+  }
+};
+
+/* ================= OUTILS COULEUR & TEXTE ================= */
+function hexToRgba(hex, a){
+  let h = (hex || "#000000").replace("#","");
+  if(h.length === 3) h = h.split("").map(c=>c+c).join("");
+  const n = parseInt(h, 16) || 0;
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+
+const fSpec = (w, s, it=false) => `${it?"italic ":""}${w} ${s}px "${S.fontMain}", sans-serif`;
+
+async function fonts(){
+  try{
+    await document.fonts.ready;
+    await Promise.all([
+      document.fonts.load(fSpec(800, 40), S.title||"A"),
+      document.fonts.load(fSpec(400, 30, S.subItalic), S.sub||"A"),
+      document.fonts.load(fSpec(700, 30), S.hdrLeft||"A")
+    ]);
+  }catch(e){}
+}
+
+function wrapLines(txt, maxW){
+  const out = [];
+  for(const para of String(txt).split("\n")){
+    if(!para.trim()){ out.push(""); continue; }
+    let line = "";
+    for(const w of para.split(/\s+/).filter(Boolean)){
+      const test = line ? line + " " + w : w;
+      if(ctx.measureText(test).width <= maxW || !line) line = test;
+      else { out.push(line); line = w; }
+    }
+    if(line) out.push(line);
+  }
+  return out;
+}
+
+function roundRectPath(x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+/* ================= DESSIN DU VISUEL ================= */
+function drawRotated(g, img, cx, cy, dw, dh, rot){
+  const sw = rot % 180, w = sw ? dh : dw, h = sw ? dw : dh;
+  g.save(); g.translate(cx, cy); g.rotate(rot*Math.PI/180); g.drawImage(img, -w/2, -h/2, w, h); g.restore();
+}
+
+let bgCache = {k:"", c:null};
+function blurBg(pw, ph, W, H){
+  const k = [photoId, S.rot, S.blur, W, H].join();
+  if(bgCache.k !== k){
+    const c = bgCache.c || document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d"), sc = Math.max(W/pw, H/ph)*1.16;
+    g.filter = `blur(${S.blur}px) brightness(0.65)`;
+    drawRotated(g, photo, W/2, H/2, pw*sc, ph*sc, S.rot);
+    bgCache = {k, c};
+  }
+  return bgCache.c;
+}
+
+function draw(){
+  const [W,H] = FORMATS[S.format];
+  if(cv.width!==W || cv.height!==H){ cv.width=W; cv.height=H; }
+  ctx.imageSmoothingQuality = "high";
+  ctx.globalAlpha = 1; ctx.textBaseline = "middle";
+
+  // 1. Arrière-plan
+  if(photo && S.fitMode==="solid"){
+    ctx.fillStyle = S.bgCol;
+  } else {
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,"#1c1d24"); bg.addColorStop(1,"#09090b");
+    ctx.fillStyle = bg;
+  }
+  ctx.fillRect(0,0,W,H);
+
+  // 2. Photo principale
+  if(photo){
+    const [pw,ph] = photoDims();
+    if(S.fitMode==="blur") ctx.drawImage(blurBg(pw,ph,W,H), 0, 0);
+    const base = (S.fitMode==="cover" ? Math.max : Math.min)(W/pw, H/ph) * S.zoom;
+    ctx.save();
+    if(S.fitMode==="blur"){ ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 32; }
+    drawRotated(ctx, photo, W/2 + S.px/100*W, H/2 + S.py/100*H, pw*base, ph*base, S.rot);
+    ctx.restore();
+  }
+  $("#hint").style.display = photo ? "none" : "block";
+  cv.classList.toggle("has-photo", !!photo);
+
+  // 3. Mesure préalable du bloc de texte en bas (pour un empilement sans chevauchement)
+  const padX = Math.round(W * 0.056);
+  const maxW = W - padX * 2;
+  const footH = S.showFooter ? Math.max(76, Math.round(S.footSize * 3.4)) : 28;
+  const divY = H - footH;
+
+  const hasSub = S.sub.trim().length > 0;
+  const hasTitle = S.title.trim().length > 0;
+
+  let subLines = [], subLH = S.subSize * 1.42;
+  if(hasSub){
+    ctx.font = fSpec(S.subItalic ? 300 : 400, S.subSize, S.subItalic);
+    subLines = wrapLines(S.sub.trim(), maxW);
+  }
+  const subBlockH = hasSub ? subLines.length * subLH : 0;
+
+  let titleLines = [], titleLH = S.titleSize * 1.18;
+  if(hasTitle){
+    ctx.font = fSpec(800, S.titleSize, false);
+    titleLines = wrapLines(S.title.trim(), maxW);
+  }
+  const titleBlockH = hasTitle ? titleLines.length * titleLH : 0;
+
+  const gapTitleSub = (hasTitle && hasSub) ? Math.round(S.subSize * 0.95) : 0;
+  const padAboveFoot = S.showFooter ? 36 : 44;
+  const totalTextH = titleBlockH + gapTitleSub + subBlockH;
+  const textTopY = divY - padAboveFoot - totalTextH;
+  lastTextTopY = textTopY;
+
+  // 4. Dégradé sombre du bas (couvre toujours proprement la zone texte)
+  if(S.gradOp > 0){
+    const op = S.gradOp / 100;
+    const gradTop = Math.min(H * (1 - S.gradH / 100), textTopY - 120);
+    const g = ctx.createLinearGradient(0, Math.max(0, gradTop), 0, H);
+    g.addColorStop(0.00, hexToRgba(S.gradCol, 0));
+    g.addColorStop(0.28, hexToRgba(S.gradCol, 0.58 * op));
+    g.addColorStop(0.54, hexToRgba(S.gradCol, 0.94 * op));
+    g.addColorStop(0.72, hexToRgba(S.gradCol, 1.00 * op));
+    g.addColorStop(1.00, hexToRgba(S.gradCol, 1.00 * op));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, Math.max(0, gradTop), W, H - Math.max(0, gradTop));
+  }
+
+  // 5. Dessin du titre principal et du texte explicatif
+  const tx = S.titleAlign === "center" ? W/2 : S.titleAlign === "right" ? W - padX : padX;
+  ctx.textAlign = S.titleAlign;
+  let curY = textTopY;
+
+  if(hasTitle){
+    ctx.font = fSpec(800, S.titleSize, false);
+    ctx.fillStyle = S.titleCol;
+    titleLines.forEach((line, i) => {
+      ctx.fillText(line, tx, curY + titleLH * (i + 0.5));
+    });
+    curY += titleBlockH + gapTitleSub;
+  }
+
+  if(hasSub){
+    ctx.font = fSpec(S.subItalic ? 300 : 400, S.subSize, S.subItalic);
+    ctx.fillStyle = S.subCol;
+    subLines.forEach((line, i) => {
+      ctx.fillText(line, tx, curY + subLH * (i + 0.5));
+    });
+  }
+
+  // 6. Pied de page (ligne de séparation + source + hashtag)
+  if(S.showFooter){
+    if(S.showLine){
+      ctx.fillStyle = S.lineCol;
+      ctx.fillRect(0, divY, W, 2);
+    }
+    const fy = divY + footH / 2;
+    if(S.srcTxt.trim()){
+      ctx.font = fSpec(400, S.footSize, false);
+      ctx.fillStyle = S.srcCol;
+      ctx.textAlign = "left";
+      ctx.fillText(S.srcTxt.trim(), padX, fy);
+    }
+    if(S.tagTxt.trim()){
+      ctx.font = fSpec(700, Math.round(S.footSize * 1.08), false);
+      ctx.fillStyle = S.tagCol;
+      ctx.textAlign = "right";
+      ctx.fillText(S.tagTxt.trim(), W - padX, fy);
+    }
+  }
+
+  // 7. Bandeau du haut
+  const hdrH = S.showHdr ? S.hdrH : 0;
+  if(S.showHdr){
+    ctx.fillStyle = S.hdrBg;
+    ctx.fillRect(0, 0, W, hdrH);
+
+    const txtL = S.hdrUpper ? S.hdrLeft.trim().toUpperCase() : S.hdrLeft.trim();
+    const txtR = S.hdrUpper ? S.hdrRight.trim().toUpperCase() : S.hdrRight.trim();
+    const hy = hdrH / 2;
+    const hPad = Math.round(W * 0.046);
+
+    let sL = S.hdrSizeL, sR = S.hdrSizeR;
+    // Réduction automatique si les deux textes risquent de se toucher
+    for(let k=0; k<24; k++){
+      ctx.font = fSpec(800, sL); const wL = txtL ? ctx.measureText(txtL).width : 0;
+      ctx.font = fSpec(500, sR); const wR = txtR ? ctx.measureText(txtR).width : 0;
+      if(wL + wR + (txtL && txtR ? 40 : 0) <= W - hPad*2 || (sL <= 14 && sR <= 14)) break;
+      if(sL > 14) sL -= 1.5;
+      if(sR > 14) sR -= 1.2;
+    }
+
+    if(txtL){
+      ctx.font = fSpec(800, sL);
+      ctx.fillStyle = S.hdrColL;
+      ctx.textAlign = "left";
+      ctx.fillText(txtL, hPad, hy);
+    }
+    if(txtR){
+      ctx.font = fSpec(500, sR);
+      ctx.fillStyle = S.hdrColR;
+      ctx.textAlign = "right";
+      ctx.fillText(txtR, W - hPad, hy);
+    }
+  }
+
+  // 8. Étiquette / Badge centré sous le bandeau
+  if(S.showBadge && S.badgeTxt.trim()){
+    const bTxt = S.badgeUpper ? S.badgeTxt.trim().toUpperCase() : S.badgeTxt.trim();
+    let bs = S.badgeSize;
+    const maxBadgeW = W - 120;
+    let bw = 0;
+    for(;;){
+      ctx.font = fSpec(800, bs);
+      bw = ctx.measureText(bTxt).width;
+      if(bw <= maxBadgeW - 72 || bs <= 16) break;
+      bs -= 2;
+    }
+    const bPadX = Math.round(bs * 1.15);
+    const bPadY = Math.round(bs * 0.52);
+    const boxW = bw + bPadX * 2;
+    const boxH = bs + bPadY * 2;
+    const boxX = (W - boxW) / 2;
+    const boxY = hdrH + S.badgeY;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.28)";
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = S.badgeBg;
+    if(S.badgeRadius > 0){
+      roundRectPath(boxX, boxY, boxW, boxH, S.badgeRadius);
+      ctx.fill();
+    } else {
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+    }
+    ctx.restore();
+
+    ctx.font = fSpec(800, bs);
+    ctx.fillStyle = S.badgeCol;
+    ctx.textAlign = "center";
+    ctx.fillText(bTxt, W / 2, boxY + boxH / 2 + 1);
+  }
+
+  $("#info").textContent = `${W} × ${H} px`;
+  fitView();
+}
+
+function fitView(){
+  const st = $("#stage"), [W,H] = FORMATS[S.format];
+  const pad = isMobile ? 20 : 56;
+  const k = Math.max(.05, Math.min((st.clientWidth-pad)/W, (st.clientHeight-pad)/H));
+  cv.style.width = W*k+"px"; cv.style.height = H*k+"px";
+}
+new ResizeObserver(fitView).observe($("#stage"));
+
+/* ================= INTERACTIONS ================= */
+function sync(){
+  document.querySelectorAll("[data-o]").forEach(o=>{
+    const v = S[o.dataset.o];
+    o.textContent = " " + (Number.isInteger(v) ? v : v.toFixed(o.dataset.o==="zoom"?2:1)) + o.dataset.u;
+  });
+  document.querySelectorAll("[data-fmt]").forEach(b=>b.classList.toggle("on", b.dataset.fmt===S.format));
+  document.querySelectorAll("[data-fit]").forEach(b=>b.classList.toggle("on", b.dataset.fit===S.fitMode));
+  document.querySelectorAll(".opt-blur").forEach(el=>el.classList.toggle("hide", S.fitMode!=="blur"));
+  document.querySelectorAll(".opt-solid").forEach(el=>el.classList.toggle("hide", S.fitMode!=="solid"));
+}
+
+function syncAllInputs(){
+  document.querySelectorAll("[data-k]").forEach(el=>{
+    const k = el.dataset.k;
+    if(el.type === "checkbox") el.checked = !!S[k];
+    else el.value = S[k];
+  });
+  sync();
+}
+
+let tk = 0, raf = 0;
+async function render(){ const t = ++tk; sync(); saveConfig(); await fonts(); if(t===tk) draw(); }
+const redraw = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(draw); };
+
+$("#panel").addEventListener("input", e=>{
+  const t = e.target, k = t.dataset.k; if(!k) return;
+  S[k] = t.type==="checkbox" ? t.checked : t.type==="range" ? +t.value : t.value;
+  render();
+});
+$("#panel").addEventListener("change", e=>{
+  if(e.target.dataset.file === "photo" && e.target.files[0]) loadPhoto(e.target.files[0]);
+});
+$("#panel").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.fmt){ S.format = b.dataset.fmt; render(); }
+  if(b.dataset.fit){ S.fitMode = b.dataset.fit; render(); }
+  if(b.dataset.preset){
+    const p = PRESETS.find(x => x.id === b.dataset.preset);
+    if(p){ Object.assign(S, p.c); syncAllInputs(); render(); toast("Palette : " + p.nom); }
+  }
+  if(b.dataset.act) actions[b.dataset.act]();
+});
+
+// Déplacement à 1 doigt / souris + pincement à 2 doigts (pinch-to-zoom)
+const pts = new Map();
+let gest = null;
+function startGesture(){
+  const a = [...pts.values()];
+  if(a.length === 1){
+    gest = { t:"pan", x:a[0].x, y:a[0].y, px:S.px, py:S.py };
+  } else if(a.length >= 2){
+    gest = {
+      t:"pinch",
+      d:Math.max(1, Math.hypot(a[1].x-a[0].x, a[1].y-a[0].y)),
+      mx:(a[0].x+a[1].x)/2, my:(a[0].y+a[1].y)/2,
+      zoom:S.zoom, px:S.px, py:S.py
+    };
+  } else gest = null;
+}
+
+cv.addEventListener("pointerdown", e=>{
+  if(!photo) return;
+  cv.setPointerCapture(e.pointerId);
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  cv.classList.add("dragging");
+  startGesture();
+});
+cv.addEventListener("pointermove", e=>{
+  if(!pts.has(e.pointerId) || !gest) return;
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  const r = cv.getBoundingClientRect(), a = [...pts.values()];
+  if(gest.t === "pan" && a.length === 1){
+    S.px = clamp(Math.round((gest.px + (a[0].x-gest.x)/r.width*100)*2)/2, -100, 100);
+    S.py = clamp(Math.round((gest.py + (a[0].y-gest.y)/r.height*100)*2)/2, -100, 100);
+  } else if(gest.t === "pinch" && a.length >= 2){
+    const d = Math.hypot(a[1].x-a[0].x, a[1].y-a[0].y);
+    const mx = (a[0].x+a[1].x)/2, my = (a[0].y+a[1].y)/2;
+    S.zoom = clamp(Math.round(gest.zoom * (d/gest.d) * 100) / 100, 0.2, 4);
+    S.px = clamp(Math.round((gest.px + (mx-gest.mx)/r.width*100)*2)/2, -100, 100);
+    S.py = clamp(Math.round((gest.py + (my-gest.my)/r.height*100)*2)/2, -100, 100);
+  }
+  syncAllInputs(); redraw();
+});
+const endPtr = e=>{
+  if(!pts.has(e.pointerId)) return;
+  pts.delete(e.pointerId);
+  if(pts.size === 0) cv.classList.remove("dragging");
+  startGesture();
+};
+cv.addEventListener("pointerup", endPtr);
+cv.addEventListener("pointercancel", endPtr);
+
+cv.addEventListener("wheel", e=>{
+  if(!photo) return;
+  e.preventDefault();
+  S.zoom = clamp(Math.round(S.zoom*(e.deltaY<0 ? 1.06 : 1/1.06)*100)/100, 0.2, 4);
+  syncAllInputs(); redraw();
+}, {passive:false});
+
+[...document.querySelectorAll("[data-drop]"), $("#stage")].forEach(el=>{
+  el.addEventListener("dragover", e=>{ e.preventDefault(); el.classList.add("over"); });
+  el.addEventListener("dragleave", ()=>el.classList.remove("over"));
+  el.addEventListener("drop", e=>{
+    e.preventDefault(); el.classList.remove("over");
+    const f = e.dataTransfer.files[0];
+    if(f && f.type.startsWith("image/")) loadPhoto(f);
+  });
+});
+
+/* ================= EXPORT NATIF CAPACITOR + FALLBACK WEB ================= */
+async function exportImage(mode){
+  await fonts(); draw();
+  const name = `info-${S.format}-${Date.now()}.png`;
+  const Cap = window.Capacitor;
+  const native = !!(Cap && Cap.isNativePlatform && Cap.isNativePlatform());
+
+  try{
+    if(native){
+      const { Filesystem, Share } = Cap.Plugins || {};
+      const base64 = cv.toDataURL("image/png").split(",")[1];
+
+      if(mode === "share" && Filesystem && Share){
+        const res = await Filesystem.writeFile({ path: name, data: base64, directory: "CACHE" });
+        await Share.share({ title: "Partager le visuel", files: [res.uri] });
+        return;
+      }
+      if(Filesystem){
+        await Filesystem.writeFile({ path: `InfoVisuels/${name}`, data: base64, directory: "DOCUMENTS", recursive: true });
+        toast("Enregistré dans Documents/InfoVisuels");
+        return;
+      }
+    }
+
+    cv.toBlob(async b=>{
+      if(mode === "share" && navigator.canShare){
+        const f = new File([b], name, { type:"image/png" });
+        if(navigator.canShare({ files:[f] })){
+          try{ await navigator.share({ files:[f], title:"Info Visuel" }); return; }
+          catch(err){ if(err.name === "AbortError") return; }
+        }
+      }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(b); a.download = name; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+      toast("Image téléchargée");
+    }, "image/png");
+  }catch(err){
+    alert("Export impossible : " + (err?.message || "erreur inconnue."));
+  }
+}
+
+$("#dl").onclick = () => exportImage("save");
+$("#share").onclick = () => exportImage("share");
+
+render();
+</script>
+</body>
+</html>
