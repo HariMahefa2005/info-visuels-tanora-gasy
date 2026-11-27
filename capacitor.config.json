@@ -1,0 +1,8 @@
+{
+  "appId": "com.visuels.info",
+  "appName": "Info Visuels",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  }
+}
